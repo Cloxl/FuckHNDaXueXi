@@ -68,22 +68,21 @@ async def insert_videos(data_list: list[dict]):
         await db.commit()
 
 
-async def insert_user(headers: dict, learned_news=None, learned_videos=None):
+async def insert_user(uid: str, headers: dict, last_history: list):
     """
     插入用户数据到user表中。
 
     参数:
+        uid (str): 用户ID。
         headers (dict): 用户的headers。
-        learned_news (list, optional): 用户已学习的新闻。
-        learned_videos (list, optional): 用户已学习的视频。
+        last_history (list): 用户的最后浏览历史。
     """
+    headers_str = json.dumps(headers)
+    last_history_str = json.dumps(last_history)
     async with aiosqlite.connect(DB_NAME) as db:
         cursor = await db.cursor()
-        headers_str = json.dumps(headers)
-        learned_news_str = ",".join(map(str, learned_news)) if learned_news else ""
-        learned_videos_str = ",".join(map(str, learned_videos)) if learned_videos else ""
-        await cursor.execute("INSERT INTO user (headers, learned_news, learned_videos) VALUES (?, ?, ?)",
-                             (headers_str, learned_news_str, learned_videos_str))
+        await cursor.execute("INSERT INTO user (uid, user_headers, user_last_history) VALUES (?, ?, ?)",
+                             (uid, headers_str, last_history_str))
         await db.commit()
 
 
@@ -214,3 +213,89 @@ async def fetch_all_user_ids() -> List[str]:
         await cursor.execute("SELECT rowid FROM user")
         result = await cursor.fetchall()
         return [str(item[0]) for item in result]
+
+
+async def add_learned_news(uid: str, news_id: str):
+    """
+    将已学习的新闻ID添加到user_learned_news表中。
+
+    参数:
+        uid (str): 用户ID。
+        news_id (str): 已学习的新闻ID。
+    """
+    async with aiosqlite.connect(DB_NAME) as db:
+        cursor = await db.cursor()
+        await cursor.execute("INSERT INTO user_learned_news (uid, news_id) VALUES (?, ?)", (uid, news_id))
+        await db.commit()
+
+
+async def remove_learned_news(uid: str, news_id: str):
+    """
+    从user_learned_news表中删除已学习的新闻ID。
+
+    参数:
+        uid (str): 用户ID。
+        news_id (str): 已学习的新闻ID。
+    """
+    async with aiosqlite.connect(DB_NAME) as db:
+        cursor = await db.cursor()
+        await cursor.execute("DELETE FROM user_learned_news WHERE uid = ? AND news_id = ?", (uid, news_id))
+        await db.commit()
+
+
+async def add_learned_video(uid: str, video_id: str):
+    """
+    将已学习的视频ID添加到user_learned_videos表中。
+
+    参数:
+        uid (str): 用户ID。
+        video_id (str): 已学习的视频ID。
+    """
+    async with aiosqlite.connect(DB_NAME) as db:
+        cursor = await db.cursor()
+        await cursor.execute("INSERT INTO user_learned_videos (uid, video_id) VALUES (?, ?)", (uid, video_id))
+        await db.commit()
+
+
+async def remove_learned_video(uid: str, video_id: str):
+    """
+    从user_learned_videos表中删除已学习的视频ID。
+
+    参数:
+        uid (str): 用户ID。
+        video_id (str): 已学习的视频ID。
+    """
+    async with aiosqlite.connect(DB_NAME) as db:
+        cursor = await db.cursor()
+        await cursor.execute("DELETE FROM user_learned_videos WHERE uid = ? AND video_id = ?", (uid, video_id))
+        await db.commit()
+
+
+async def update_user_headers(uid: str, headers: dict):
+    """
+    更新user表中的headers字段。
+
+    参数:
+        uid (str): 用户ID。
+        headers (dict): 新的headers数据。
+    """
+    headers_str = json.dumps(headers)
+    async with aiosqlite.connect(DB_NAME) as db:
+        cursor = await db.cursor()
+        await cursor.execute("UPDATE user SET user_headers = ? WHERE uid = ?", (headers_str, uid))
+        await db.commit()
+
+
+async def update_user_last_history(uid: str, last_history: list):
+    """
+    更新user表中的user_last_history字段。
+
+    参数:
+        uid (str): 用户ID。
+        last_history (list): 新的浏览历史数据。
+    """
+    last_history_str = json.dumps(last_history)
+    async with aiosqlite.connect(DB_NAME) as db:
+        cursor = await db.cursor()
+        await cursor.execute("UPDATE user SET user_last_history = ? WHERE uid = ?", (last_history_str, uid))
+        await db.commit()

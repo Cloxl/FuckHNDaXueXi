@@ -72,7 +72,7 @@ async def auto_learn():
         news_ids, news_titles = [item["id"] for item in unlearned_news_list], [item["title"] for item in unlearned_news_list]
         for news_id, news_title in news_ids, news_titles:
             await learn_news(title=news_title, project_id=news_id, headers=await db.get_user_headers(user_id=user_id))
-        # 提取videos数组中的project_id和img_id
+        # 提取videos数组中的project_id
         videos_project_ids = [item["project_id"] for item in unlearned_videos_list]
         # 需要鉴别周
         for videos_project_id in videos_project_ids:
