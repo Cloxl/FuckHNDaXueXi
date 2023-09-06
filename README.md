@@ -20,7 +20,7 @@
   ```
   下载fd并根据网上教程配置证书，然后抓取headers并保存到数据库，即可无需管理运行
 
-- 📊 **代码统计**:
+- 📊 **代码统计**:  
   ![代码统计](https://stats.deeptrain.net/repo/Cloxl/FuckHNDaXueXi/?theme=light)
 
 - 📜 **开源协议**: [MIT](https://github.com/Cloxl/FuckHNDaXueXi/blob/main/LICENSE)
