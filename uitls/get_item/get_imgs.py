@@ -1,10 +1,11 @@
-import aiohttp
 import asyncio
+from urllib.parse import quote
+
+import aiohttp
 from loguru import logger
 
-from urllib.parse import quote
+from uitls.config.config import URL
 from uitls.config.headers import headers
-from uitls.config.URL import URL
 
 
 async def get_imgs(img_id: str):

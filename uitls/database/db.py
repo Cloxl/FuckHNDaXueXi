@@ -1,5 +1,6 @@
 import json
-from typing import Tuple, List, Any
+from typing import Any, List, Tuple
+
 import aiosqlite
 
 DB_NAME = 'utils/database/main.db'
@@ -298,4 +299,36 @@ async def update_user_last_history(uid: str, last_history: list):
     async with aiosqlite.connect(DB_NAME) as db:
         cursor = await db.cursor()
         await cursor.execute("UPDATE user SET user_last_history = ? WHERE uid = ?", (last_history_str, uid))
+        await db.commit()
+
+
+async def get_user_last_history(uid: str) -> list:
+    """
+    从数据库中根据用户ID获取用户的最后浏览历史。
+
+    参数:
+        uid (str): 用户ID。
+
+    返回:
+        list: 用户的最后浏览历史。
+    """
+    async with aiosqlite.connect(DB_NAME) as db:
+        cursor = await db.cursor()
+        await cursor.execute("SELECT user_last_history FROM user WHERE uid = ?", (uid,))
+        result = await cursor.fetchone()
+        if result:
+            return json.loads(result[0])
+        return []
+
+
+async def clear_user_last_history(uid: str):
+    """
+    清空指定用户的最后浏览历史。
+
+    参数:
+        uid (str): 用户ID。
+    """
+    async with aiosqlite.connect(DB_NAME) as db:
+        cursor = await db.cursor()
+        await cursor.execute("UPDATE user SET user_last_history = ? WHERE uid = ?", (json.dumps([]), uid))
         await db.commit()

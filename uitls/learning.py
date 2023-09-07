@@ -3,7 +3,7 @@ from typing import Any
 import httpx
 from loguru import logger
 
-from uitls.config.URL import URL
+from uitls.config.config import URL
 from uitls.get_item.get_items import get_ctoken, get_time
 
 
