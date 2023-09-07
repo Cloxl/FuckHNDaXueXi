@@ -73,8 +73,8 @@ async def auto_update_list(uid: str = "auto"):
             logger.error(f"获取指定用户 {uid} 的请求头失败 原因:{e}")
     else:
         try:
-            headers = await db.get_user_headers(random.choice(await db.fetch_all_user_ids()))
-            logger.info(f"成功获取随级请求头")
+            headers = await db.get_user_headers(random.choice(await db.get_all_uids()))
+            logger.info("成功获取随级请求头")
         except IndexError:
             # 处理没有用户的情况
             logger.warning("没有任何用户存在数据库，自动暂停更新列表程序")
@@ -89,7 +89,7 @@ async def auto_update_list(uid: str = "auto"):
         videos_task = asyncio.create_task(unlearned_list.get_unlearned_videos_list(headers=headers))
         unlearned_news_list = await news_task
         unlearned_videos_list = await videos_task
-        logger.info(f"成功获取unlearned_list的新闻和视频数据")
+        logger.info("成功获取unlearned_list的新闻和视频数据")
     except Exception as e:
         logger.error(f"获取unlearned_list发生错误: {e}")
         return
@@ -127,7 +127,7 @@ async def auto_learn(uid: str = "auto"):
         logger.info(f"成功获取指定用户数据 {uid}")
     else:
         try:
-            all_user_ids = await db.fetch_all_user_ids()
+            all_user_ids = await db.get_all_uids()
             logger.info(f"成功获取所有用户数据,当前用户量:{len(all_user_ids)}")
         except Exception as e:
             logger.error(f"获取所有用户失败: {e}")
@@ -150,20 +150,32 @@ async def process_single_user_learning(user_id: str):
         return
 
     # 提取news数组中的id和title
-    news_ids, news_titles = [item["id"] for item in unlearned_news_list], [item["title"] for item in
-                                                                           unlearned_news_list]
+    news_ids, news_titles = (
+        [item["id"] for item in unlearned_news_list],
+        [item["title"] for item in unlearned_news_list]
+    )
+    content_list_news = []
     for news_id, news_title in zip(news_ids, news_titles):
         try:
             await learn_news(title=news_title, project_id=news_id, headers=headers)
+            content_list_news.append({
+                "news_id": news_id,
+                "news_title": news_title
+            })
             logger.info(f"用户 {user_id} 学习湖南青年说成功 - {news_id}")
         except Exception as e:
             logger.error(f"学习{news_id} - {news_title}失败: {e}")
+    await update_user_content(user_id=user_id, content_type="news", content_list=content_list_news)
 
     # 提取videos数组中的project_id
-    videos_project_ids = [item["project_id"] for item in unlearned_videos_list]
+    videos_project_ids, videos_img_ids = (
+        [item["project_id"] for item in unlearned_videos_list],
+        [item["img_id"] for item in unlearned_videos_list]
+    )
+
     try:
         # 访问数据库 看看这一周是否完成了 知识回顾
-        history_list = await db.get_user_last_history(uid=user_id)
+        history_list = await db.get_user_last_history(user_id=user_id)
         logger.info(f"获取用户 {user_id} 往期回顾内容成功")
     except Exception as e:
         logger.error(f"用户{user_id}获取本周知识回顾失败: {e}")
@@ -171,10 +183,19 @@ async def process_single_user_learning(user_id: str):
 
     # 如果小于5则知识回顾能加的分未达到上限 继续学习        如果大于等于5 这是不可能发生的 因为一周只能有5次知识回顾
     if len(history_list) < 5:
-        for videos_project_id in videos_project_ids:
+        content_list = []
+        for videos_project_id, videos_img_id in zip(videos_project_ids, videos_img_ids):
             try:
                 await learn_history_videos(videos_project_id, headers=headers)
+                logger.success(f"用户 {user_id} 成功学习了 {videos_project_id} ")
+                content_list_news.append({
+                    "project_id": videos_project_id,
+                    "img_id": videos_img_id
+                })
             except Exception as e:
                 logger.error(f"用户{user_id}学习往期回顾{videos_project_id}失败: {e}")
+
+            await update_user_content(user_id=user_id, content_type="videos", content_list=content_list)
+            logger.success(f"用户 {user_id} 往期回顾内容更新成功!")
     else:
         logger.warning(f"用户 {user_id} 本周已完成往期回顾任务")
