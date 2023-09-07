@@ -1,6 +1,6 @@
 from typing import Any
 
-import httpx
+import aiohttp
 from loguru import logger
 
 from uitls.config.config import URL
@@ -8,13 +8,13 @@ from uitls.get_item.get_items import get_ctoken, get_time
 
 
 async def make_request(url: str, data: dict, headers: dict) -> Any | None:
-    async with httpx.AsyncClient() as client:
-        response = await client.post(url=url, headers=headers, data=data)
+    async with aiohttp.ClientSession() as session:
+        response = await session.post(url=url, headers=headers, data=data)
         try:
             response.raise_for_status()
             return response.json()
-        except httpx.HTTPStatusError as exc:
-            logger.error(f"请求失败: {exc}")
+        except aiohttp.ClientError as e:
+            logger.error(f"请求失败: {e}")
             return None
 
 

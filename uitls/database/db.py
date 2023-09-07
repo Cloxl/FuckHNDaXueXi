@@ -69,7 +69,7 @@ async def insert_videos(data_list: list[dict]):
         await db.commit()
 
 
-async def insert_user(uid: str, headers: dict, last_history: list):
+async def insert_user(uid: str, headers: dict, last_history: list = None):
     """
     插入用户数据到user表中。
 

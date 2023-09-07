@@ -1,7 +1,7 @@
 import asyncio
 from urllib.parse import urlparse
 
-import httpx
+import aiohttp
 from loguru import logger
 
 from uitls.config.config import URL, Time
@@ -14,15 +14,15 @@ class UnlearnedList:
 
     async def get_unlearned_news_list(self, headers: dict):
         unlearned_list_news = []
-        async with httpx.AsyncClient() as client:
+        async with aiohttp.ClientSession() as session:
             for page_count in range(self.max_page_count + 1):
                 try:
                     url = URL.GET_NEWS_LIST_URL.format(time=await get_time())
                     data = {"page": page_count, "pageSize": 10, "reqType": "list"} if page_count > 0 else {}
-                    response = await client.post(url=url, headers=headers, data=data)
-                    logger.info(f"获取湖南青年说列表成功，当前是第{page_count + 1}页，状态:{response.status_code}")
-                    if response.status_code == 200:
-                        json_data = response.json()
+                    response = await session.post(url=url, headers=headers, data=data)
+                    logger.info(f"获取湖南青年说列表成功，当前是第{page_count + 1}页，状态:{response.status}")
+                    if response.status == 200:
+                        json_data = await response.json()
                         data_list = json_data.get('data', {}).get('list', [])
                         unlearned_list_news.extend([{'id': str(item.get('id', '')), 'title': item.get('title', '')}
                                                     for item in data_list])
@@ -33,15 +33,15 @@ class UnlearnedList:
 
     async def get_unlearned_videos_list(self, headers: dict):
         unlearned_list_videos = []
-        async with httpx.AsyncClient() as client:
+        async with aiohttp.ClientSession() as session:
             for page_count in range(self.max_page_count + 1):
                 try:
                     url = URL.GET_VIDEOS_LIST_URL.format(time=await get_time())
                     data = {"page": page_count, "pageSize": 10} if page_count > 0 else {}
-                    response = await client.post(url=url, headers=headers, data=data)
-                    logger.info(f"获取湖南大学习列表成功，当前是第{page_count + 1}页，状态:{response.status_code}")
-                    if response.status_code == 200:
-                        json_data = response.json()
+                    response = await session.post(url=url, headers=headers, data=data)
+                    logger.info(f"获取湖南大学习列表成功，当前是第{page_count + 1}页，状态:{response.status}")
+                    if response.status == 200:
+                        json_data = await response.json()
                         data_list = json_data.get('data', {}).get('list', [])
                         for item in data_list:
                             full_url = item.get('url', '')
@@ -55,15 +55,15 @@ class UnlearnedList:
 
     async def get_learned_list(self, headers: dict):
         news, videos, history = [], [], []
-        async with httpx.AsyncClient() as client:
+        async with aiohttp.ClientSession() as session:
             for page_count in range(self.max_page_count + 1):
                 try:
                     url = URL.GET_LEARNED_LIST_URL.format(time=await get_time())
                     data = {'page': page_count, 'pageSize': 20 if page_count == 0 else 10}
-                    response = await client.post(url=url, headers=headers, data=data)
-                    logger.info(f"已学习列表获取成功, 页数:{page_count + 1}, 状态:{response.status_code}")
-                    if response.status_code == 200:
-                        json_data = response.json()
+                    response = await session.post(url=url, headers=headers, data=data)
+                    logger.info(f"已学习列表获取成功, 页数:{page_count + 1}, 状态:{response.status}")
+                    if response.status == 200:
+                        json_data = await response.json()
                         data_list = json_data.get('data', {}).get('list', [])
                         for item in data_list:
                             raw_project_id = str(item.get('projectId', ''))
@@ -77,17 +77,3 @@ class UnlearnedList:
                 except Exception as e:
                     logger.error(f"获取已学习列表时出现错误，页数：{page_count + 1}。错误信息：{str(e)}")
         return news, videos, history
-
-# async def main():
-#     max_page_count = 5  # 你可以根据需要设置最大页数
-#     obj = UnlearnedList(max_page_count)
-#     news_list = await obj.get_unlearned_news_list()
-#     videos_list = await obj.get_unlearned_videos_list()
-#     learned_list = await obj.get_learned_list()
-#     print("未学习新闻列表:", news_list)
-#     print("未学习视频列表:", videos_list)
-#     print("已学习列表:", learned_list)
-#
-#
-# if __name__ == "__main__":
-#     asyncio.run(main())
