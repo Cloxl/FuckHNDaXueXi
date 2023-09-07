@@ -155,14 +155,14 @@ async def get_all_videos() -> list[dict]:
 
 async def get_user_learned_content(user_id: str) -> Tuple[List[dict], List[dict]]:
     """
-       根据用户ID从数据库中获取用户已学习的新闻和视频。
+    根据用户ID从数据库中获取用户已学习的新闻和视频。
 
-       参数:
-           user_id (str): 用户ID。
+    参数:
+        user_id (str): 用户ID。
 
-       返回:
-           Tuple[List[dict], List[dict]]: 第一个列表是用户已学习的新闻，第二个列表是用户已学习的视频。
-       """
+    返回:
+        Tuple[List[dict], List[dict]]: 第一个列表是用户已学习的新闻，第二个列表是用户已学习的视频。
+    """
     async with aiosqlite.connect(DB_NAME) as db:
         cursor = await db.cursor()
         await cursor.execute("SELECT learned_news, learned_videos FROM user WHERE rowid = ?", (user_id,))
@@ -172,14 +172,26 @@ async def get_user_learned_content(user_id: str) -> Tuple[List[dict], List[dict]
             learned_videos_ids = result[1].split(",") if result[1] else []
 
             # 获取用户已经读取news数量
-            await cursor.execute("SELECT id, title FROM news WHERE id IN ({})".format(",".join("?" * len(learned_news_ids))), learned_news_ids)
-            news_result = await cursor.fetchall()
-            learned_news = [{"id": item[0], "title": item[1]} for item in news_result]
+            if learned_news_ids:
+                # 直接在SQL语句中使用字符串格式化来构建查询是不安全的 它可能导致SQL注入攻击 这里使用占位符替代
+                placeholders_news = ",".join("?" for _ in learned_news_ids)
+                await cursor.execute(f"SELECT id, title FROM news WHERE id IN ({placeholders_news})", learned_news_ids)
+                news_result = await cursor.fetchall()
+                learned_news = [{"id": item[0], "title": item[1]} for item in news_result]
+            else:
+                learned_news = []
 
             # 获取用户已经读取的videos数量
-            await cursor.execute("SELECT project_id, img_id FROM videos WHERE project_id IN ({})".format(",".join("?" * len(learned_videos_ids))), learned_videos_ids)
-            videos_result = await cursor.fetchall()
-            learned_videos = [{"project_id": item[0], "img_id": item[1]} for item in videos_result]
+            if learned_videos_ids:
+                # 直接在SQL语句中使用字符串格式化来构建查询是不安全的 它可能导致SQL注入攻击 这里使用占位符替代
+                placeholders_videos = ",".join("?" for _ in learned_videos_ids)
+                await cursor.execute(
+                    f"SELECT project_id, img_id FROM videos WHERE project_id IN ({placeholders_videos})",
+                    learned_videos_ids)
+                videos_result = await cursor.fetchall()
+                learned_videos = [{"project_id": item[0], "img_id": item[1]} for item in videos_result]
+            else:
+                learned_videos = []
 
             return learned_news, learned_videos
         return [], []
