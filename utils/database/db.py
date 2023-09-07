@@ -173,9 +173,10 @@ async def get_user_learned_content(user_id: str) -> Tuple[List[dict], List[dict]
 
             # 获取用户已经读取news数量
             if learned_news_ids:
-                # 直接在SQL语句中使用字符串格式化来构建查询是不安全的 它可能导致SQL注入攻击 这里使用占位符替代
+                # 使用占位符替代
                 placeholders_news = ",".join("?" for _ in learned_news_ids)
-                await cursor.execute(f"SELECT id, title FROM news WHERE id IN ({placeholders_news})", learned_news_ids)
+                await cursor.execute("SELECT id, title FROM news WHERE id IN (" + placeholders_news + ")",
+                                     learned_news_ids)
                 news_result = await cursor.fetchall()
                 learned_news = [{"id": item[0], "title": item[1]} for item in news_result]
             else:
@@ -183,10 +184,10 @@ async def get_user_learned_content(user_id: str) -> Tuple[List[dict], List[dict]
 
             # 获取用户已经读取的videos数量
             if learned_videos_ids:
-                # 直接在SQL语句中使用字符串格式化来构建查询是不安全的 它可能导致SQL注入攻击 这里使用占位符替代
+                # 使用占位符替代
                 placeholders_videos = ",".join("?" for _ in learned_videos_ids)
                 await cursor.execute(
-                    f"SELECT project_id, img_id FROM videos WHERE project_id IN ({placeholders_videos})",
+                    "SELECT project_id, img_id FROM videos WHERE project_id IN (" + placeholders_videos + ")",
                     learned_videos_ids)
                 videos_result = await cursor.fetchall()
                 learned_videos = [{"project_id": item[0], "img_id": item[1]} for item in videos_result]

@@ -3,8 +3,8 @@ from typing import Any
 import aiohttp
 from loguru import logger
 
-from uitls.config.config import URL
-from uitls.get_item.get_items import get_ctoken, get_time
+from utils.config.config import URL
+from utils.get_item.get_items import get_ctoken, get_time
 
 
 async def make_request(url: str, data: dict, headers: dict) -> Any | None:

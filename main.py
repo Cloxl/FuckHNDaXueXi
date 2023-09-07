@@ -4,9 +4,9 @@ from typing import Any
 
 from loguru import logger
 
-import uitls.database.db as db
-from uitls.get_item.get_list import UnlearnedList
-from uitls.learning import learn_history_videos, learn_news
+import utils.database.db as db
+from utils.get_item.get_list import UnlearnedList
+from utils.learning import learn_history_videos, learn_news
 
 
 async def fetch_all_content() -> tuple[list, list]:

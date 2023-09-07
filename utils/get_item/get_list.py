@@ -4,8 +4,8 @@ from urllib.parse import urlparse
 import aiohttp
 from loguru import logger
 
-from uitls.config.config import URL, Time
-from uitls.get_item.get_items import get_time
+from utils.config.config import URL, Time
+from utils.get_item.get_items import get_time
 
 
 class UnlearnedList:

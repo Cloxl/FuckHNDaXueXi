@@ -3,8 +3,8 @@ import re
 import aiohttp
 from loguru import logger
 
-from uitls.config.config import URL
-from uitls.config.headers import headers
+from utils.config.config import URL
+from utils.config.headers import headers
 
 
 async def get_points():

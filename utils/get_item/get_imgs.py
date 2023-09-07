@@ -4,8 +4,8 @@ from urllib.parse import quote
 import aiohttp
 from loguru import logger
 
-from uitls.config.config import URL
-from uitls.config.headers import headers
+from utils.config.config import URL
+from utils.config.headers import headers
 
 
 async def get_imgs(img_id: str):
