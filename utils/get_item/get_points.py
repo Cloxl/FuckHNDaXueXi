@@ -4,10 +4,9 @@ import aiohttp
 from loguru import logger
 
 from utils.config.config import URL
-from utils.config.headers import headers
 
 
-async def get_points():
+async def get_points(headers: dict) -> str:
     try:
         async with aiohttp.ClientSession() as session:
             response = await session.get(URL.GET_POINT_URL, headers=headers)

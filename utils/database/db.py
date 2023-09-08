@@ -2,6 +2,7 @@ import json
 from typing import List, Tuple
 
 import aiosqlite
+import bcrypt
 from loguru import logger
 
 DB_NAME = 'utils/database/main.db'
@@ -29,6 +30,7 @@ async def init_db():
     await execute("""
         CREATE TABLE IF NOT EXISTS user (
             uid TEXT PRIMARY KEY,
+            password TEXT NOT NULL, 
             headers TEXT NOT NULL,
             last_history TEXT NOT NULL
         );
@@ -140,11 +142,28 @@ async def insert_videos(data_list: list[dict]):
     await execute(query, values)
 
 
-async def insert_user(uid: str, headers: dict, last_history: list):
+async def hash_password(pwd: str) -> str:
+    """
+    使用bcrypt哈希密码
+    """
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(pwd.encode('utf-8'), salt)
+    return hashed.decode('utf-8')
+
+
+async def insert_user(uid: str, password: str, headers: dict, last_history: list):  # <-- 添加密码参数
+    hashed_password = await hash_password(password)  # 使用bcrypt哈希密码
     headers_str = json.dumps(headers)
     last_history_str = json.dumps(last_history)
-    await execute("INSERT INTO user (uid, headers, last_history) VALUES (?, ?, ?)",
-                  (uid, headers_str, last_history_str))
+    await execute("INSERT INTO user (uid, password, headers, last_history) VALUES (?, ?, ?, ?)",  # <-- 插入哈希后的密码
+                  (uid, hashed_password, headers_str, last_history_str))
+
+
+async def check_password(hashed_password: str, user_password: str) -> bool:
+    """
+    检查用户提供的密码是否与哈希密码匹配。
+    """
+    return bcrypt.checkpw(user_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
 
 async def add_learned_video(uid: str, video_id: str):
@@ -240,3 +259,15 @@ async def update_user_learned_content(user_id: str, content_type: str, content_l
 
     else:
         logger.error(f"未知的content_type: {content_type}")
+
+
+async def update_user_headers(uid: str, headers: dict):
+    """
+    更新指定用户的headers。
+
+    :param uid: 用户的ID
+    :param headers: 新的headers数据
+    """
+    headers_str = json.dumps(headers)  # 将headers字典转换为字符串
+    query = "UPDATE user SET headers = ? WHERE uid = ?"
+    await execute(query, (headers_str, uid))

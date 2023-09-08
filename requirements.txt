@@ -1,3 +1,6 @@
 aiohttp==3.8.5
 aiosqlite==0.19.0
 loguru==0.7.1
+quart
+pyCryptoDome
+bcrypt
