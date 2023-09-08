@@ -1,0 +1,55 @@
+.container {
+    max-width: 600px;
+    margin: 50px auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.input-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+#username {
+    flex-grow: 1;
+}
+
+#username, #password, #request-header, #submit-btn {
+    border-radius: 45px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    border: 1px solid #ccc;
+    margin: 0 0 20px;
+    font-family: 'Arial', sans-serif;
+    text-align: center;
+}
+
+#request-header::placeholder {
+    text-align: center;
+}
+
+#request-header {
+    padding-left: 15px;
+    text-align: left;
+    resize: vertical;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+#check-icon {
+    display: none;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%); /* 使用transform来垂直居中 */
+    z-index: 10;
+}
+
+#check-icon img {
+    width: 20px;
+    height: 20px;
+}

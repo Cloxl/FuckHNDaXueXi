@@ -1,10 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>添加用户页面</title>
+    <link href="css/add_user.css" rel="stylesheet">
 </head>
-<body>
 
+<body>
+<div class="container">
+    <div class="input-wrapper">
+        <input id="username" maxlength="10" placeholder="输入用户名称" type="text">
+        <div id="check-icon">
+            <img alt="Check Icon" src="imgs/succeed.png">
+        </div>
+    </div>
+    <input id="password" placeholder="输入密码" type="password">
+    <textarea id="request-header" placeholder="输入请求头"></textarea>
+    <button id="submit-btn">提交</button>
+</div>
+
+<script src="js/add_user.js"></script>
 </body>
+
 </html>

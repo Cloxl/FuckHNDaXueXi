@@ -16,7 +16,7 @@
   ```bash
   git clone https://github.com/Cloxl/FuckHNDaXueXi.git
   pip install requirements.txt
-  python main.py
+  python learn_utils.py
   ```
   下载fd并根据网上教程配置证书，然后抓取headers并保存到数据库，即可无需管理运行
 
