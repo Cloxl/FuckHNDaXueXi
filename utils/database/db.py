@@ -30,7 +30,7 @@ async def init_db():
     await execute("""
         CREATE TABLE IF NOT EXISTS user (
             uid TEXT PRIMARY KEY,
-            password TEXT NOT NULL, 
+            password TEXT NOT NULL,
             headers TEXT NOT NULL,
             last_history TEXT NOT NULL
         );
