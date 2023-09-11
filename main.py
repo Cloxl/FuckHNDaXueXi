@@ -3,14 +3,13 @@ import json
 
 from crypto.Cipher import AES
 from crypto.Util.Padding import unpad
+from loguru import logger
 from quart import Quart, jsonify, request
 
 import utils.database.db as db
 from utils.get_item.get_points import get_points
 
 app = Quart(__name__)
-
-# Use a fixed AES key and iv
 AES_KEY = "abcdefghijklmnop"
 AES_IV = "qrstuvwxzyabcdef"
 
@@ -72,7 +71,11 @@ async def check(data: json) -> bool:
 
 @app.route('/user/add', methods=['POST'])
 async def register():
-    data = await request.json
+    try:
+        data = await request.json
+    except Exception as e:
+        logger.error(f"注册出现异常: {e}")
+        return jsonify({"message": "注册失败"}), 500
     uid = data.get('uid')
     password = data.get('password')
     existing_user = await db.fetch_one("SELECT uid FROM user WHERE uid = ?", (uid,))
@@ -88,7 +91,11 @@ async def get_aes_key_and_iv():
 
 @app.route('/list', methods=['POST'])
 async def get_data_list():
-    data = await request.json
+    try:
+        data = await request.json
+    except Exception as e:
+        logger.error(f"list获取出现异常: {e}")
+        return jsonify({"message": "获取list失败"}), 500
     status = await check(data=data)
     if not status:
         return
@@ -101,7 +108,11 @@ async def get_data_list():
 
 @app.route('/user/point', methods=['POST'])
 async def get_user_points():
-    data = await request.json
+    try:
+        data = await request.json
+    except Exception as e:
+        logger.error(f"获取用户积分失败: {e}")
+        return jsonify({"message": "获取失败"}), 500
     status = await check(data=data)
     if not status:
         return
@@ -113,7 +124,11 @@ async def get_user_points():
 
 @app.route('/user/headers', methods=['POST'])
 async def update_headers():
-    data = await request.json
+    try:
+        data = await request.json
+    except Exception as e:
+        logger.error(f"更新请求头出现异常: {e}")
+        return jsonify({"message": "更新失败"}), 500
     status = await check(data=data)
     if not status:
         return

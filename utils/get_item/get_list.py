@@ -12,7 +12,7 @@ class UnlearnedList:
     def __init__(self, max_page_count):
         self.max_page_count = max_page_count
 
-    async def get_unlearned_news_list(self, headers: dict):
+    async def get_unlearned_news_list(self, headers: dict) -> list:
         unlearned_list_news = []
         async with aiohttp.ClientSession() as session:
             for page_count in range(self.max_page_count + 1):
@@ -31,7 +31,7 @@ class UnlearnedList:
                     logger.error(f"获取湖南青年说列表时出现错误，页数：{page_count + 1}。错误信息：{str(e)}")
         return unlearned_list_news
 
-    async def get_unlearned_videos_list(self, headers: dict):
+    async def get_unlearned_videos_list(self, headers: dict) -> list:
         unlearned_list_videos = []
         async with aiohttp.ClientSession() as session:
             for page_count in range(self.max_page_count + 1):
@@ -53,7 +53,7 @@ class UnlearnedList:
                     logger.error(f"获取湖南大学习列表时出现错误，页数：{page_count + 1}。错误信息：{str(e)}")
         return unlearned_list_videos
 
-    async def get_learned_list(self, headers: dict):
+    async def get_learned_list(self, headers: dict) -> tuple[list[str], list[str], list[str]]:
         news, videos, history = [], [], []
         async with aiohttp.ClientSession() as session:
             for page_count in range(self.max_page_count + 1):

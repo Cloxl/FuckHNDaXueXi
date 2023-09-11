@@ -17,6 +17,45 @@ const App: React.FC = () => {
     const [password, setPassword] = useState('');
     const [requestHeader, setRequestHeader] = useState('');
 
+    const getCookieValue = (name: string) => {
+        const value = "; " + document.cookie;
+        const parts = value.split("; " + name + "=");
+        if (parts.length === 2) return parts.pop()?.split(";").shift();
+        return null;
+    }
+
+    useEffect(() => {
+        // 读取cookie
+        const uidFromCookie = getCookieValue('uid');
+        const passwordFromCookie = getCookieValue('password');
+
+        if (uidFromCookie && passwordFromCookie) {
+            setUsername(uidFromCookie);
+            setPassword(passwordFromCookie);
+        }
+    }, [])
+
+    useEffect(() => {
+        if (username && password) {
+            // 如果username和password存在且不为空，发送积分检查请求
+            const fetchPoints = async () => {
+                try {
+                    const {key, iv} = await getAESKeyAndIv();
+                    const encryptedPassword = encrypt(password, key, iv);
+                    const response = await axios.post(`${BASE_URL}/user/point`, {
+                        username,
+                        password: encryptedPassword
+                    });
+                    setPoints(response.data.points);
+                } catch (error) {
+                    console.error("Error fetching points:", error);
+                }
+            };
+
+            fetchPoints();
+        }
+    }, [username, password]);
+
     const showModal = () => {
         setIsModalVisible(true);
     };
@@ -82,8 +121,9 @@ const App: React.FC = () => {
             });
             if (response.data === true) {
                 message.success('登录成功');
-                // Save cookie logic here
-                document.cookie = "loggedIn=true";
+                // 保存username和password到cookie
+                document.cookie = `uid=${username}; path=/`;
+                document.cookie = `password=${password}; path=/`;
             } else {
                 message.error('登录失败');
             }
@@ -149,7 +189,7 @@ const App: React.FC = () => {
 
             <Modal
                 centered
-                visible={isModalVisible}
+                open={isModalVisible}
                 onCancel={handleCancel}
                 footer={null}
                 style={{maxWidth: '500px', maxHeight: '300px', marginTop: 'calc(50vh - 150px)'}}
