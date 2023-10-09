@@ -1,4 +1,4 @@
-aiohttp==3.8.5
+aiohttp==3.8.6
 aiosqlite==0.19.0
 loguru==0.7.1
 quart
