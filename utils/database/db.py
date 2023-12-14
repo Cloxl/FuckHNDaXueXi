@@ -55,22 +55,22 @@ async def init_db():
 
 async def get_connection():
     """
-    获取连接池
+    获取数据库连接。
     """
     global connection_pool
-    if connection_pool is None:
+    if connection_pool is None or not isinstance(connection_pool, aiosqlite.Connection):
         connection_pool = await aiosqlite.connect(DB_NAME, isolation_level=None)
     return connection_pool
 
 
 async def close_connection():
     """
-    关闭连接池
+    关闭数据库连接
     """
-    global connection_pool
-    if connection_pool:
-        await connection_pool.close()
-        connection_pool = None
+    global db_connection
+    if db_connection:
+        await db_connection.close()
+        db_connection = None
 
 
 def handle_exception(func):
@@ -152,9 +152,11 @@ async def hash_password(pwd: str) -> str:
 
 
 async def insert_user(uid: str, password: str, headers: dict, last_history: list):  # <-- 添加密码参数
-    hashed_password = await hash_password(password)  # 使用bcrypt哈希密码
+    logger.info(f"接收到的请求头:{headers}")
+    hashed_password = await hash_password(password)
     headers_str = json.dumps(headers)
     last_history_str = json.dumps(last_history)
+    logger.info(f"请求头:{headers_str}")
     await execute("INSERT INTO user (uid, password, headers, last_history) VALUES (?, ?, ?, ?)",  # <-- 插入哈希后的密码
                   (uid, hashed_password, headers_str, last_history_str))
 

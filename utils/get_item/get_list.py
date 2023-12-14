@@ -28,6 +28,7 @@ class UnlearnedList:
                                                     for item in data_list])
                     await asyncio.sleep(Time.Sleep_time)
                 except Exception as e:
+                    logger.error(f"页面内容:{await response.json()}")
                     logger.error(f"获取湖南青年说列表时出现错误，页数：{page_count + 1}。错误信息：{str(e)}")
         return unlearned_list_news
 

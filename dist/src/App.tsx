@@ -5,7 +5,7 @@ import {UserOutlined} from '@ant-design/icons';
 import axios from 'axios';
 import CryptoJS from 'crypto-js';
 
-const BASE_URL = "http://127.0.0.1:11220";
+const BASE_URL = "http://127.0.0.1:8009";
 const {TabPane} = Tabs;
 const {Header, Content} = Layout;
 
@@ -15,7 +15,10 @@ const App: React.FC = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const [requestHeader, setRequestHeader] = useState('');
+    const [aesKey, setAesKey] = useState('');
+    const [aesIv, setAesIv] = useState('');
+    const [RequestJSESSIONID, setRequestJSESSIONID] = useState('');
+    const [RequestSESSIONID, setRequestSESSIONID] = useState('');
 
     const getCookieValue = (name: string) => {
         const value = "; " + document.cookie;
@@ -40,15 +43,15 @@ const App: React.FC = () => {
             // 如果username和password存在且不为空，发送积分检查请求
             const fetchPoints = async () => {
                 try {
-                    const {key, iv} = await getAESKeyAndIv();
-                    const encryptedPassword = encrypt(password, key, iv);
+                    
+                    const encryptedPassword = encrypt(password);
                     const response = await axios.post(`${BASE_URL}/user/point`, {
                         username,
                         password: encryptedPassword
                     });
                     setPoints(response.data.points);
                 } catch (error) {
-                    console.error("Error fetching points:", error);
+                    console.error("获取分数失败:", error);
                 }
             };
 
@@ -56,22 +59,47 @@ const App: React.FC = () => {
         }
     }, [username, password]);
 
-    const showModal = () => {
-        setIsModalVisible(true);
+    const toggleModal = (isVisible: boolean | ((prevState: boolean) => boolean)) => {
+        setIsModalVisible(isVisible);
     };
 
-    const handleCancel = () => {
-        setIsModalVisible(false);
+    const handleChange = (type: string, event: { target: { value: React.SetStateAction<string>; }; }) => {
+        switch (type) {
+            case 'username':
+                setUsername(event.target.value);
+                break;
+            case 'password':
+                setPassword(event.target.value);
+                break;
+            case 'JSESSIONID':
+                setRequestJSESSIONID(event.target.value);
+                break;
+            case 'SESSIONID':
+                setRequestSESSIONID(event.target.value);
+                break;
+            default:
+                break;
+        }
     };
 
-    const getAESKeyAndIv = async () => {
-        const response = await axios.get(`${BASE_URL}/aes`);
-        return response.data;
-    };
+    useEffect(() => {
+        const fetchAESKeyAndIv = async () => {
+            try {
+                const response = await axios.get(`${BASE_URL}/aes`);
+                console.log("获取的key iv", response.data);
+                setAesKey(response.data.key);
+                setAesIv(response.data.iv);
+            } catch (error) {
+                console.error("获取AES key和iv失败:", error);
+            }
+        };
 
-    const encrypt = (text: string, key: any, iv: any) => {
-        const encrypted = CryptoJS.AES.encrypt(text, CryptoJS.enc.Utf8.parse(key), {
-            iv: CryptoJS.enc.Utf8.parse(iv),
+        fetchAESKeyAndIv();
+    }, []);
+
+    const encrypt = (text: string) => {
+        const encrypted = CryptoJS.AES.encrypt(text, CryptoJS.enc.Utf8.parse(aesKey), {
+            iv: CryptoJS.enc.Utf8.parse(aesIv),
             mode: CryptoJS.mode.CBC,
             padding: CryptoJS.pad.Pkcs7
         });
@@ -81,22 +109,20 @@ const App: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const {key, iv} = await getAESKeyAndIv();
-                const encryptedPassword = encrypt(password, key, iv);
+                const encryptedPassword = encrypt(password);
                 const response = await axios.post(`${BASE_URL}/list`, {
                     username,
                     password: encryptedPassword
                 });
                 setDataSource(response.data);
             } catch (error) {
-                console.error("Error fetching data:", error);
+                console.error("请求失败:", error);
             }
         };
 
         const fetchPoints = async () => {
             try {
-                const {key, iv} = await getAESKeyAndIv();
-                const encryptedPassword = encrypt(password, key, iv);
+                const encryptedPassword = encrypt(password);
                 const response = await axios.post(`${BASE_URL}/user/point`, {
                     username,
                     password: encryptedPassword
@@ -113,8 +139,7 @@ const App: React.FC = () => {
 
     const handleLoginSubmit = async () => {
         try {
-            const {key, iv} = await getAESKeyAndIv();
-            const encryptedPassword = encrypt(password, key, iv);
+            const encryptedPassword = encrypt(password);
             const response = await axios.post(`${BASE_URL}/user/add`, {
                 username,
                 password: encryptedPassword
@@ -128,27 +153,27 @@ const App: React.FC = () => {
                 message.error('登录失败');
             }
         } catch (error) {
-            console.error("Error during login:", error);
+            console.error("登录错误:", error);
             message.error('登录失败');
         }
     };
 
-    const handleUpdateHeaders = async (requestHeader: string) => {
+    const handleUpdateHeaders = async () => {
         try {
-            const {key, iv} = await getAESKeyAndIv();
-            const encryptedPassword = encrypt(password, key, iv);
-            const encodedRequestHeader = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(requestHeader));
+            const encryptedPassword = encrypt(password);
             await axios.post(`${BASE_URL}/user/headers`, {
                 username,
                 password: encryptedPassword,
-                requestHeader: encodedRequestHeader
+                JSESSIONID: RequestJSESSIONID,
+                sessionid: RequestSESSIONID,
             });
-            message.success('请求头更新成功');
+            message.success('账户更新成功');
         } catch (error) {
             console.error("Error updating headers:", error);
-            message.error('请求头更新失败');
+            message.error('账户更新失败');
         }
     };
+
 
     const columns = [
         {
@@ -180,7 +205,7 @@ const App: React.FC = () => {
                     <span style={{marginRight: '10px', color: 'black'}}>积分: {points}</span>
                 </Popover>
                 <Popover content="什么?这里居然是用户中心?" trigger="hover">
-                    <Avatar icon={<UserOutlined/>} onClick={showModal}/>
+                    <Avatar icon={<UserOutlined/>} onClick={() => toggleModal(true)}/>
                 </Popover>
             </Header>
             <Content>
@@ -190,7 +215,7 @@ const App: React.FC = () => {
             <Modal
                 centered
                 open={isModalVisible}
-                onCancel={handleCancel}
+                onCancel={() => toggleModal(false)}
                 footer={null}
                 style={{maxWidth: '500px', maxHeight: '300px', marginTop: 'calc(50vh - 150px)'}}
             >
@@ -204,23 +229,26 @@ const App: React.FC = () => {
                                 <Input.Password placeholder="请输入密码"/>
                             </Form.Item>
                             <Form.Item>
-                                <Button type="primary" onClick={handleLoginSubmit}>提交</Button>
+                                <Button type="primary" onClick={handleLoginSubmit}>登录</Button>
                             </Form.Item>
                         </Form>
                     </TabPane>
-                    <TabPane tab="更新请求头" key="2">
+                    <TabPane tab="更新账户" key="2">
                         <Form layout="vertical">
                             <Form.Item label="用户名" name="username">
-                                <Input placeholder="请输入用户名"/>
+                                <Input placeholder="请输入用户名" onChange={(e) => handleChange('username', e)} />
                             </Form.Item>
                             <Form.Item label="密码" name="password">
-                                <Input placeholder="请输入密码"/>
+                                <Input placeholder="请输入密码" onChange={(e) => handleChange('password', e)} />
                             </Form.Item>
-                            <Form.Item label="请求头" name="requestHeader">
-                                <Input placeholder="请输入请求头"/>
+                            <Form.Item label="requestJSESSIONID" name="JSESSIONID">
+                                <Input placeholder="JSESSIONID" onChange={(e) => handleChange('JSESSIONID', e)} />
+                            </Form.Item>
+                            <Form.Item label="requestSESSIONID" name="SESSIONID">
+                                <Input placeholder="SESSIONID" onChange={(e) => handleChange('SESSIONID', e)} />
                             </Form.Item>
                             <Form.Item>
-                                <Button type="primary" onClick={() => handleUpdateHeaders(requestHeader)}>更新</Button>
+                                <Button type="primary" onClick={() => handleUpdateHeaders()}>更新</Button>
                             </Form.Item>
                         </Form>
                     </TabPane>
